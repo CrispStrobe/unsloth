@@ -53,6 +53,21 @@ unsloth_template = \
 unsloth_eos_token = "eos_token"
 CHAT_TEMPLATES["unsloth"] = (unsloth_template, unsloth_eos_token,)
 
+phi3_template = \
+    "{% for message in messages %}"\
+        "{% if message['role'] == 'user' %}"\
+            "{{ '<|user|>' + message['content'] + '<|end|>\n' }}"\
+        "{% elif message['role'] == 'assistant' %}"\
+            "{{ '<|assistant|>' + message['content'] + '<|end|>\n' }}"\
+        "{% else %}"\
+            "{{ message['content'] + '<|end|>\n' }}"\
+        "{% endif %}"\
+    "{% endfor %}"\
+    "{% if add_generation_prompt %}"\
+        "{{ '<|assistant|>' }}"\
+    "{% endif %}"
+phi3_eos_token = "<|end|>"
+CHAT_TEMPLATES["phi3"] = (phi3_template, phi3_eos_token,)
 
 # Zephyr has no BOS!
 zephyr_template = \
@@ -576,6 +591,14 @@ def test_chat_templates():
     correct_tokenizer.chat_template = gemma_template
     our_prompt = correct_tokenizer.apply_chat_template(messages[1:], tokenize = False, add_generation_prompt = True)
     assert(our_prompt == correct_prompt)
+
+    # Phi3
+    template = phi3_template 
+    correct_tokenizer = AutoTokenizer.from_pretrained("vonjack/Phi-3-mini-4k-instruct-LLaMAfied")
+    correct_prompt = correct_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    correct_tokenizer.chat_template = template
+    our_prompt = correct_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    assert(correct_prompt == our_prompt)
 
     # Llama-3
     template = llama3_template
