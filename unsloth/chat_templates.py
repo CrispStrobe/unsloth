@@ -54,13 +54,19 @@ unsloth_eos_token = "eos_token"
 CHAT_TEMPLATES["unsloth"] = (unsloth_template, unsloth_eos_token,)
 
 phi3_template = \
-    "{% for message in messages %}"\
+    "{% if messages[0]['role'] == 'system' %}"\
+        "{{ '<|system|>' + messages[0]['content'] + '<|end|>\n' }}"\
+        "{% set loop_messages = messages[1:] %}"\
+    "{% else %}"\
+        "{% set loop_messages = messages %}"\
+    "{% endif %}"\
+    "{% for message in loop_messages %}"\
         "{% if message['role'] == 'user' %}"\
             "{{ '<|user|>' + message['content'] + '<|end|>\n' }}"\
         "{% elif message['role'] == 'assistant' %}"\
             "{{ '<|assistant|>' + message['content'] + '<|end|>\n' }}"\
         "{% else %}"\
-            "{{ message['content'] + '<|end|>\n' }}"\
+            "{{ raise_exception('Only system, user, and assistant roles are supported!') }}"\
         "{% endif %}"\
     "{% endfor %}"\
     "{% if add_generation_prompt %}"\
